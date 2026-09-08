@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /favorites/
+Disallow: /bookmarks/
+
+Sitemap: https://dr-etshoooo.com/sitemap.xml

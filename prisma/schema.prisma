@@ -1,0 +1,401 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          String    @default("student")
+  tokenVersion  Int       @default(0)
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  favorites     Favorite[]
+  bookmarks     Bookmark[]
+  progress      Progress[]
+  completions   Completion[]
+  quizResults   QuizResult[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model AcademicYear {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  description String?
+  order       Int        @default(0)
+  published   Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  semesters   Semester[]
+
+  @@index([slug])
+  @@index([order])
+  @@index([published])
+}
+
+model Semester {
+  id            String       @id @default(cuid())
+  title         String
+  slug          String
+  academicYearId String
+  description   String?
+  order         Int          @default(0)
+  published     Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  academicYear  AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  subjects      Subject[]
+
+  @@unique([academicYearId, slug])
+  @@index([academicYearId])
+  @@index([order])
+  @@index([published])
+}
+
+model Subject {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String
+  description   String?
+  icon          String?
+  image         String?
+  semesterId    String
+  order         Int       @default(0)
+  published     Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  semester      Semester  @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  topics        Topic[]
+  medicalTerms  MedicalTerm[]
+  howToStudy    HowToStudy[]
+
+  @@unique([semesterId, slug])
+  @@index([semesterId])
+  @@index([slug])
+  @@index([order])
+  @@index([published])
+}
+
+model Topic {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  subjectId   String
+  order       Int       @default(0)
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  lectures    Lecture[]
+  mcqs        Mcq[]
+  essays      Essay[]
+  notes       Note[]
+  clinicalCases ClinicalCase[]
+  flashcards  Flashcard[]
+  exams       Exam[]
+
+  @@unique([subjectId, slug])
+  @@index([subjectId])
+  @@index([slug])
+  @@index([order])
+  @@index([published])
+}
+
+model Lecture {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String
+  description String?
+  content     String?
+  videoUrl    String?
+  pdfUrl      String?
+  thumbnail   String?
+  topicId     String
+  duration    Int?
+  order       Int       @default(0)
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  completions Completion[]
+
+  @@unique([topicId, slug])
+  @@index([topicId])
+  @@index([slug])
+  @@index([order])
+  @@index([published])
+}
+
+model Mcq {
+  id          String    @id @default(cuid())
+  question    String
+  options     String
+  correctAnswer String
+  explanation String?
+  difficulty  String    @default("medium")
+  topicId     String
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  results     QuizResult[]
+
+  @@index([topicId])
+  @@index([difficulty])
+  @@index([published])
+}
+
+model Essay {
+  id          String    @id @default(cuid())
+  question    String
+  modelAnswer String
+  explanation String?
+  difficulty  String    @default("medium")
+  topicId     String
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([difficulty])
+  @@index([published])
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  category    String    @default("general")
+  topicId     String
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([category])
+  @@index([published])
+}
+
+model ClinicalCase {
+  id          String    @id @default(cuid())
+  title       String
+  patientInfo String
+  symptoms    String
+  signs       String?
+  investigations String?
+  differentialDiag String?
+  finalDiagnosis String?
+  management  String?
+  topicId     String
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([published])
+}
+
+model Flashcard {
+  id          String    @id @default(cuid())
+  front       String
+  back        String
+  topicId     String
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([published])
+}
+
+model Exam {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  duration    Int?
+  questionCount Int?
+  topicId     String
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([published])
+}
+
+model MedicalTerm {
+  id          String    @id @default(cuid())
+  term        String
+  arabicTerm  String?
+  latinTerm   String?
+  definition  String
+  simpleExplanation String?
+  arabicMeaning String?
+  pronunciation String?
+  clinicalRelevance String?
+  relatedTerms String?
+  subjectId   String?
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  subject     Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@index([term])
+  @@index([arabicTerm])
+  @@index([latinTerm])
+  @@index([subjectId])
+  @@index([published])
+}
+
+model MedicalApp {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  imageUrl    String?
+  features    String?
+  isFree      Boolean   @default(true)
+  howToUse    String?
+  officialUrl String?
+  platform    String?
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([category])
+  @@index([published])
+}
+
+model HowToStudy {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String
+  description String?
+  subjectId   String?
+  content     String?
+  videoUrl    String?
+  tips        String?
+  studyMethod String?
+  order       Int       @default(0)
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  subject     Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@unique([slug])
+  @@index([subjectId])
+  @@index([slug])
+  @@index([published])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  itemType  String
+  itemId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType, itemId])
+  @@index([userId])
+  @@index([itemType, itemId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  itemType  String
+  itemId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType, itemId])
+  @@index([userId])
+  @@index([itemType, itemId])
+}
+
+model Progress {
+  id        String   @id @default(cuid())
+  userId    String
+  subjectId String
+  percentage Float  @default(0)
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectId])
+  @@index([userId])
+}
+
+model Completion {
+  id        String   @id @default(cuid())
+  userId    String
+  lectureId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lecture   Lecture  @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lectureId])
+  @@index([userId])
+  @@index([lectureId])
+}
+
+model QuizResult {
+  id        String   @id @default(cuid())
+  userId    String
+  mcqId     String
+  answer    String
+  correct   Boolean
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mcq       Mcq      @relation(fields: [mcqId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([mcqId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   @default("info")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+  @@index([createdAt])
+}
